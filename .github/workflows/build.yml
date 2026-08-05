@@ -1,0 +1,43 @@
+# این فایل، APK اپ گیاهیار را به‌صورت خودکار روی سرورهای گیت‌هاب می‌سازد
+# (نه روی سیستم شما) - چون بیلد کیوی نیاز به Android SDK/NDK و مقدار
+# زیادی فضا و زمان دارد. هر بار که به شاخه اصلی push کنید، یک بیلد جدید
+# اجرا می‌شود؛ همچنین می‌توانید از تب Actions در گیت‌هاب دستی هم اجرایش کنید.
+#
+# نتیجه (فایل APK) را از تب Actions → روی آخرین اجرا کلیک کنید →
+# پایین صفحه، بخش Artifacts دانلود کنید.
+#
+# نکته مهم: buildozer.spec باید در ریشه‌ی همین ریپازیتوری باشد (یعنی وقتی
+# پروژه را به گیت‌هاب push می‌کنید، محتوای پوشه plant_care_app را مستقیم
+# در ریشه‌ی ریپو بگذارید، نه خودِ پوشه را با یک لایه اضافه).
+
+name: Build Android APK
+
+"on":
+  push:
+  workflow_dispatch:  # اجرای دستی از تب Actions
+
+jobs:
+  build-android:
+    name: ساخت APK با Buildozer
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout کد پروژه
+        uses: actions/checkout@v4
+
+      # این اکشن از ایمیج رسمی داکر Buildozer استفاده می‌کند که از قبل
+      # Android SDK/NDK داخلش آماده است، پس بیلد سریع‌تر و پایدارتر از
+      # نصب دستی از صفر است.
+      - name: بیلد با Buildozer
+        uses: ArtemSBulgakov/buildozer-action@v1
+        id: buildozer
+        with:
+          command: buildozer android debug
+          buildozer_version: stable
+
+      - name: آپلود APK به‌عنوان artifact قابل‌دانلود
+        uses: actions/upload-artifact@v4
+        with:
+          name: giyahyar-apk
+          path: ${{ steps.buildozer.outputs.filename }}
+          if-no-files-found: error
